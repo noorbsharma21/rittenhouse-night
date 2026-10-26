@@ -360,6 +360,24 @@ playBtn.onclick=()=>{
 };
 
 document.getElementById("total").textContent=DATA.est.filter(e=>e.hrs).length;
+
+/* ---------- deep link: ?day=Fri&h=22 opens straight on that moment, so a
+   printed report can point at one hour rather than the start of the week ---- */
+(function(){
+  const q=new URLSearchParams(location.search);
+  const d=q.get("day");
+  if(d){
+    const i=DATA.days.findIndex(x=>x.toLowerCase().startsWith(d.toLowerCase().slice(0,3)));
+    if(i>=0){dayIdx=i;[...daysEl.children].forEach((c,j)=>c.classList.toggle("on",j===i));}
+  }
+  const h=q.get("h");
+  if(h!==null&&h!==""){
+    const hh=parseInt(h,10);
+    if(!isNaN(hh))slot=Math.max(0,Math.min(23,(((hh-6)%24)+24)%24));
+  }
+  slider.value=slot;
+})();
+
 render();
 </script>
 </body>

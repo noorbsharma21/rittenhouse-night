@@ -19,6 +19,18 @@ Built for CPLN 6890 *The City at Night*, Area Study 2, Brief 7: Business Activit
   against Friday night rather than Saturday.
 - Click a row in the legend to isolate or hide a kind of business.
 
+## Linking to one moment
+
+Add `?day=` and `?h=` to open the page already set to a particular hour, which is
+useful from a printed report:
+
+- <https://noorbsharma21.github.io/rittenhouse-night/?day=Fri&h=22> — Friday 10pm, 17 open
+- <https://noorbsharma21.github.io/rittenhouse-night/?day=Fri&h=0> — Friday midnight, 7 open
+- <https://noorbsharma21.github.io/rittenhouse-night/?day=Tue&h=22> — Tuesday 10pm, for contrast
+
+`h` is a 24-hour clock value; anything from 6 (6am) round to 5 (5am) lands in the
+same night.
+
 ## Source and method
 
 Google Places extract (August 2026), joined to the 2026 study-area polygon with a
