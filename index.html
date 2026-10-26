@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rittenhouse Square — watch the corridor close</title>
+<style>
+  :root{
+    --sky:#FDF6E3; --ink:#1A1A17; --ink2:#55524A; --muted:#8A8679;
+    --street:#D9D2C2; --panel:rgba(255,255,255,.55); --edge:rgba(0,0,0,.14);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    background:var(--sky); color:var(--ink);
+    transition:background .45s ease,color .45s ease;
+    min-height:100vh; padding:22px 24px 30px;
+  }
+  .wrap{max-width:1060px;margin:0 auto}
+  h1{font-size:21px;margin:0 0 2px;letter-spacing:-.015em}
+  .sub{font-size:12.5px;color:var(--ink2);margin:0 0 16px;transition:color .45s}
+
+  .top{display:flex;gap:20px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px}
+  .readout{display:flex;align-items:baseline;gap:9px}
+  .big{font-size:44px;font-weight:700;letter-spacing:-.03em;line-height:1;
+       font-variant-numeric:tabular-nums}
+  .of{font-size:13px;color:var(--ink2);transition:color .45s}
+  .clock{margin-left:auto;text-align:right}
+  .time{font-size:30px;font-weight:700;letter-spacing:-.02em;
+        font-variant-numeric:tabular-nums;line-height:1}
+  .dayname{font-size:12px;color:var(--ink2);transition:color .45s}
+
+  .controls{display:flex;gap:14px;align-items:center;margin:4px 0 14px;flex-wrap:wrap}
+  .days{display:flex;gap:4px;flex-wrap:wrap}
+  .days button{
+    font:inherit;font-size:11.5px;padding:4px 9px;border-radius:999px;cursor:pointer;
+    border:1px solid var(--edge);background:var(--panel);color:var(--ink2);
+    transition:all .18s;
+  }
+  .days button:hover{border-color:var(--muted)}
+  .days button.on{background:var(--ink);color:var(--sky);border-color:var(--ink)}
+
+  .playbtn{
+    font:inherit;font-size:12px;padding:5px 13px;border-radius:999px;cursor:pointer;
+    border:1px solid var(--edge);background:var(--panel);color:var(--ink);
+    transition:all .18s;min-width:74px;
+  }
+  .playbtn:hover{border-color:var(--muted)}
+
+  input[type=range]{
+    flex:1;min-width:260px;-webkit-appearance:none;appearance:none;height:26px;
+    background:transparent;cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-runnable-track{
+    height:6px;border-radius:3px;
+    background:linear-gradient(90deg,#FFD21E 0%,#FFC02E 22%,#C9A24A 42%,
+               #6E7486 62%,#2E4272 80%,#0B1733 100%);
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:20px;height:20px;border-radius:50%;
+    background:#fff;border:2.5px solid var(--ink);margin-top:-7px;
+    box-shadow:0 1px 4px rgba(0,0,0,.28);
+  }
+  input[type=range]::-moz-range-track{height:6px;border-radius:3px;
+    background:linear-gradient(90deg,#FFD21E,#C9A24A,#2E4272,#0B1733)}
+  input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;
+    background:#fff;border:2.5px solid var(--ink)}
+
+  .ticks{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);
+         margin:-6px 2px 14px;transition:color .45s}
+
+  .main{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+  .mapbox{flex:1 1 560px;min-width:320px;position:relative}
+  svg{width:100%;height:auto;display:block;border-radius:6px;
+      border:1px solid var(--edge);transition:border-color .45s}
+
+  .side{flex:0 0 232px}
+  .legend h3{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;
+             color:var(--muted);margin:0 0 7px;font-weight:700;transition:color .45s}
+  .lg{display:flex;align-items:center;gap:8px;padding:5px 7px;border-radius:5px;
+      cursor:pointer;font-size:12.5px;transition:background .15s,opacity .15s}
+  .lg:hover{background:var(--panel)}
+  .lg.off{opacity:.32}
+  .dot{width:11px;height:11px;border-radius:50%;flex:0 0 11px;
+       border:1.4px solid rgba(255,255,255,.85)}
+  .lg .n{margin-left:auto;font-size:11.5px;color:var(--ink2);
+         font-variant-numeric:tabular-nums;transition:color .45s}
+
+  .note{font-size:11px;color:var(--muted);line-height:1.45;margin-top:14px;
+        transition:color .45s}
+
+  .tip{position:absolute;pointer-events:none;background:#15151A;color:#fff;
+       padding:7px 10px;border-radius:5px;font-size:11.5px;line-height:1.35;
+       opacity:0;transition:opacity .12s;max-width:210px;z-index:5;
+       box-shadow:0 3px 12px rgba(0,0,0,.3)}
+  .tip b{display:block;font-size:12.5px;margin-bottom:1px}
+  .tip span{color:#B9B6AC}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Watch Rittenhouse Square close</h1>
+  <p class="sub">Every establishment with published hours. Drag through the night &mdash;
+     or press play &mdash; and see which kinds of business stay open.</p>
+
+  <div class="top">
+    <div class="readout">
+      <span class="big" id="count">0</span>
+      <span class="of">of <b id="total">59</b> open</span>
+    </div>
+    <div class="clock">
+      <div class="time" id="time">6:00am</div>
+      <div class="dayname" id="dayname">Friday night</div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="playbtn" id="play">▶ Play</button>
+    <input type="range" id="slider" min="0" max="23" value="0" step="1">
+  </div>
+  <div class="ticks">
+    <span>6am</span><span>9am</span><span>12pm</span><span>3pm</span>
+    <span>6pm</span><span>9pm</span><span>12am</span><span>3am</span>
+  </div>
+
+  <div class="controls" style="margin-top:-4px">
+    <div class="days" id="days"></div>
+  </div>
+
+  <div class="main">
+    <div class="mapbox">
+      <svg id="map" viewBox="0 0 640 560" role="img"
+           aria-label="Map of Rittenhouse Square establishments, open or closed at the selected hour"></svg>
+      <div class="tip" id="tip"></div>
+    </div>
+    <div class="side">
+      <div class="legend" id="legend"><h3>Kind of business</h3></div>
+      <p class="note">
+        Filled = open at this hour. Faded = shut. Hollow = no published hours
+        (four hotels, the Square itself, two residential buildings, one store).
+        <br><br>
+        Each night runs 6am to 5am the following morning, so a Friday 1am closing
+        counts as Friday night.
+        <br><br>
+        Google Places, Aug&nbsp;2026; hours rebuilt from <code>weekday_text</code>.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = {"bbox":[-75.174361,39.947561,-75.168766,39.952058],"poly":[[-75.173495,39.952058],[-75.168766,39.951454],[-75.169632,39.947561],[-75.174361,39.948185],[-75.173495,39.952058]],"streets":[{"name":"LOCUST","pts":[[-75.169342,39.948813],[-75.170264,39.948923]]},{"name":"WALNUT","pts":[[-75.169104,39.949952],[-75.17067,39.950141]]},{"name":"WALNUT","pts":[[-75.172246,39.950347],[-75.172754,39.950407]]},{"name":"17TH","pts":[[-75.169404,39.948525],[-75.169415,39.948476]]},{"name":"CHESTNUT","pts":[[-75.168994,39.951504],[-75.169039,39.95151]]},{"name":"20TH","pts":[[-75.173725,39.950983],[-75.173815,39.950541]]},{"name":"MORAVIAN","pts":[[-75.168994,39.950378],[-75.169005,39.95038]]},{"name":"18TH","pts":[[-75.171098,39.948169],[-75.171182,39.947793]]},{"name":"SANSOM","pts":[[-75.172088,39.951107],[-75.173656,39.951299]]},{"name":"RITTENHOUSE","pts":[[-75.172601,39.948739],[-75.173087,39.948809]]},{"name":"WALNUT","pts":[[-75.169085,39.94995],[-75.169104,39.949952]]},{"name":"SPRUCE","pts":[[-75.169616,39.94759],[-75.171182,39.947793]]},{"name":"CHESTNUT","pts":[[-75.171918,39.951865],[-75.173492,39.952062]]},{"name":"17TH","pts":[[-75.168948,39.950633],[-75.169005,39.95038]]},{"name":"18TH","pts":[[-75.171026,39.948552],[-75.171044,39.948419]]},{"name":"SANSOM","pts":[[-75.168925,39.950708],[-75.168931,39.950708]]},{"name":"18TH","pts":[[-75.171182,39.947793],[-75.171192,39.947747]]},{"name":"MANNING","pts":[[-75.172667,39.948373],[-75.174244,39.948569]]},{"name":"19TH","pts":[[-75.172141,39.950827],[-75.172246,39.950347]]},{"name":"RITTENHOUSE","pts":[[-75.171026,39.948552],[-75.172601,39.948739]]},{"name":"20TH","pts":[[-75.174076,39.9494],[-75.174175,39.94893]]},{"name":"SANSOM","pts":[[-75.173656,39.951299],[-75.173668,39.951301]]},{"name":"CHESTNUT","pts":[[-75.173492,39.952062],[-75.173508,39.952064]]},{"name":"OPAL","pts":[[-75.173676,39.949349],[-75.173706,39.949199]]},{"name":"19TH","pts":[[-75.171918,39.951867],[-75.171918,39.951865]]},{"name":"17TH","pts":[[-75.16877,39.951476],[-75.168878,39.950967]]},{"name":"18TH","pts":[[-75.17067,39.950141],[-75.170788,39.949569]]},{"name":"17TH","pts":[[-75.169244,39.949233],[-75.169251,39.949202]]},{"name":"20TH","pts":[[-75.174325,39.948187],[-75.174328,39.948176]]},{"name":"MORAVIAN","pts":[[-75.173725,39.950983],[-75.173736,39.950985]]},{"name":"SPRUCE","pts":[[-75.169609,39.947589],[-75.169616,39.94759]]},{"name":"18TH","pts":[[-75.170452,39.951156],[-75.170502,39.950911]]},{"name":"SPRUCE","pts":[[-75.172751,39.947981],[-75.174325,39.948187]]},{"name":"SCHUBERT","pts":[[-75.169415,39.948476],[-75.170337,39.948589]]},{"name":"19TH","pts":[[-75.172751,39.947981],[-75.172753,39.947971]]},{"name":"RITTENHOUSE","pts":[[-75.172754,39.950407],[-75.172999,39.949263]]},{"name":"LOCUST","pts":[[-75.174076,39.9494],[-75.174101,39.949403]]},{"name":"IONIC","pts":[[-75.173577,39.951665],[-75.173599,39.951667]]},{"name":"18TH","pts":[[-75.170502,39.950911],[-75.170573,39.950589]]},{"name":"STOCK EXCHANGE","pts":[[-75.168878,39.950967],[-75.170452,39.951156]]},{"name":"MOZART","pts":[[-75.170337,39.948589],[-75.170392,39.948339]]},{"name":"20TH","pts":[[-75.174244,39.948569],[-75.174325,39.948187]]},{"name":"CHANCELLOR","pts":[[-75.169222,39.949402],[-75.170788,39.949569]]},{"name":"MANNING","pts":[[-75.169532,39.947973],[-75.171098,39.948169]]},{"name":"17TH","pts":[[-75.169474,39.948217],[-75.169484,39.948173]]},{"name":"RITTENHOUSE","pts":[[-75.169474,39.948217],[-75.170392,39.948339]]},{"name":"17TH","pts":[[-75.169104,39.949952],[-75.169171,39.949604]]},{"name":"LOCUST","pts":[[-75.172999,39.949263],[-75.173676,39.949349]]},{"name":"20TH","pts":[[-75.173486,39.95209],[-75.173492,39.952062]]},{"name":"20TH","pts":[[-75.173962,39.949884],[-75.174076,39.9494]]},{"name":"WALNUT","pts":[[-75.17067,39.950141],[-75.172246,39.950347]]},{"name":"SANSOM","pts":[[-75.168931,39.950708],[-75.170502,39.950911]]},{"name":"20TH","pts":[[-75.1742,39.94879],[-75.174244,39.948569]]},{"name":"RITTENHOUSE","pts":[[-75.170392,39.948339],[-75.171044,39.948419]]},{"name":"20TH","pts":[[-75.173492,39.952062],[-75.173577,39.951665]]},{"name":"17TH","pts":[[-75.16945,39.948318],[-75.169462,39.948268]]},{"name":"18TH","pts":[[-75.170914,39.949003],[-75.171026,39.948552]]},{"name":"17TH","pts":[[-75.169005,39.95038],[-75.169104,39.949952]]},{"name":"RITTENHOUSE","pts":[[-75.1742,39.94879],[-75.174238,39.948795]]},{"name":"19TH","pts":[[-75.172088,39.951107],[-75.172141,39.950827]]},{"name":"WALNUT","pts":[[-75.172754,39.950407],[-75.173815,39.950541]]},{"name":"19TH","pts":[[-75.172667,39.948373],[-75.172751,39.947981]]},{"name":"18TH","pts":[[-75.170337,39.951669],[-75.170452,39.951156]]},{"name":"MORAVIAN","pts":[[-75.172141,39.950827],[-75.173725,39.950983]]},{"name":"17TH","pts":[[-75.169616,39.94759],[-75.169622,39.947563]]},{"name":"STOCK EXCHANGE","pts":[[-75.168857,39.950965],[-75.168878,39.950967]]},{"name":"MOZART","pts":[[-75.170264,39.948923],[-75.170337,39.948589]]},{"name":"LOCUST","pts":[[-75.173676,39.949349],[-75.174076,39.9494]]},{"name":"RITTENHOUSE","pts":[[-75.172999,39.949263],[-75.173087,39.948809]]},{"name":"20TH","pts":[[-75.173577,39.951665],[-75.173656,39.951299]]},{"name":"17TH","pts":[[-75.169313,39.948936],[-75.169342,39.948813]]},{"name":"20TH","pts":[[-75.174175,39.94893],[-75.1742,39.94879]]},{"name":"RITTENHOUSE","pts":[[-75.173087,39.948809],[-75.174175,39.94893]]},{"name":"LOCUST","pts":[[-75.169313,39.948809],[-75.169342,39.948813]]},{"name":"MANNING","pts":[[-75.171098,39.948169],[-75.172667,39.948373]]},{"name":"18TH","pts":[[-75.170335,39.95168],[-75.170337,39.951669]]},{"name":"LOCUST","pts":[[-75.170264,39.948923],[-75.170914,39.949003]]},{"name":"17TH","pts":[[-75.169532,39.947973],[-75.169534,39.947963]]},{"name":"SPRUCE","pts":[[-75.174325,39.948187],[-75.174374,39.948193]]},{"name":"18TH","pts":[[-75.170573,39.950589],[-75.17067,39.950141]]},{"name":"SPRUCE","pts":[[-75.171182,39.947793],[-75.172751,39.947981]]},{"name":"20TH","pts":[[-75.173815,39.950541],[-75.173962,39.949884]]},{"name":"19TH","pts":[[-75.172601,39.948739],[-75.172667,39.948373]]},{"name":"MORAVIAN","pts":[[-75.169005,39.95038],[-75.170573,39.950589]]},{"name":"SANSOM","pts":[[-75.170502,39.950911],[-75.172088,39.951107]]},{"name":"18TH","pts":[[-75.171044,39.948419],[-75.171098,39.948169]]},{"name":"CHANCELLOR","pts":[[-75.173962,39.949884],[-75.17401,39.94989]]},{"name":"20TH","pts":[[-75.173656,39.951299],[-75.173708,39.951039],[-75.173725,39.950983]]},{"name":"18TH","pts":[[-75.170788,39.949569],[-75.170914,39.949003]]},{"name":"17TH","pts":[[-75.168878,39.950967],[-75.168931,39.950708]]},{"name":"19TH","pts":[[-75.171918,39.951865],[-75.172088,39.951107]]},{"name":"CHESTNUT","pts":[[-75.170726,39.951717],[-75.170818,39.951728]]},{"name":"17TH","pts":[[-75.169415,39.948476],[-75.169435,39.948382]]},{"name":"WALNUT","pts":[[-75.173815,39.950541],[-75.173873,39.950548]]}],"days":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],"est":[{"name":"AKA Rittenhouse Square","cat":"Lodging / residential","street":"South 18th Street","lon":-75.170401,"lat":39.950392,"hrs":false,"sched":[null,null,null,null,null,null,null]},{"name":"Anthropologie","cat":"Comparison retail","street":"Walnut Street","lon":-75.170818,"lat":39.950329,"closes":"8:00pm","hrs":true,"sched":["000011111111110000000000","000011111111110000000000","000011111111110000000000","000011111111110000000000","000011111111110000000000","000011111111110000000000","000011111111000000000000"]},{"name":"Athleta","cat":"Comparison retail","street":"Walnut Street","lon":-75.170278,"lat":39.95,"closes":"7:00pm","hrs":true,"sched":["000011111111100000000000","000011111111100000000000","000011111111100000000000","000011111111100000000000","000011111111100000000000","000011111111100000000000","000001111110000000000000"]},{"name":"Barclay Prime","cat":"Restaurant with bar","street":"South 18th Street","lon":-75.170761,"lat":39.948486,"closes":"11:00pm","hrs":true,"sched":["000000000001111100000000","000000000001111100000000","000000000001111100000000","000000000001111100000000","000000000001111110000000","000000000001111110000000","000000000001111100000000"]},{"name":"Benjamin Lovell Shoes","cat":"Comparison retail","street":"Chestnut Street","lon":-75.169973,"lat":39.951329,"closes":"6:00pm","hrs":true,"sched":["000011111111000000000000","000011111111000000000000","000011111111000000000000","000011111111000000000000","000011111111000000000000","000011111111000000000000","000001111111000000000000"]},{"name":"Bluestone Lane Rittenhouse Caf\u00e9","cat":"Cafe / bakery / takeaway","street":"Locust Street","lon":-75.169489,"lat":39.948912,"closes":"5:00pm","hrs":true,"sched":["011111111110000000000000","011111111110000000000000","011111111110000000000000","011111111110000000000000","011111111110000000000000","011111111110000000000000","011111111110000000000000"]},{"name":"Born Yesterday","cat":"Comparison retail","street":"Walnut Street","lon":-75.172665,"lat":39.950496,"closes":"6:00pm","hrs":true,"sched":["000011111111000000000000","000011111111000000000000","000011111111000000000000","000011111111000000000000","000011111111000000000000","000011111111000000000000","000011111110000000000000"]},{"name":"Borromini","cat":"Restaurant with bar","street":"Walnut Street","lon":-75.170891,"lat":39.950366,"closes":"11:00pm","hrs":true,"sched":["000001111111111100000000","000001111111111100000000","000001111111111100000000","000001111111111100000000","000001111111111110000000","000011111111111110000000","000011111111111100000000"]},{"name":"Boyds Philadelphia","cat":"Comparison retail","street":"Chestnut Street","lon":-75.171296,"lat":39.951689,"closes":"6:00pm","hrs":true,"sched":["000001111111000000000000","000001111111000000000000","000001111111000000000000","000001111111000000000000","000001111111000000000000","000001111111000000000000","000000000000000000000000"]},{"name":"Byblos","cat":"Restaurant with bar","street":"South 18th Street","lon":-75.170658,"lat":39.951199,"closes":"2:00am","hrs":true,"sched":["000000000000111111110000","000000000000111111110000","000000000000111111110000","000000000000111111110000","000000000000111111110000","000000000000111111110000","000000000000111111110000"]},{"name":"CORK, The Wine Shop at COOK","cat":"Food & convenience retail","street":"South 20th Street","lon":-75.174066,"lat":39.948847,"closes":"8:00pm","hrs":true,"sched":["000001111111110000000000","000001111111110000000000","000001111111110000000000","000001111111110000000000","000001111111110000000000","000001111111110000000000","000001111111110000000000"]},{"name":"CVS","cat":"Food & convenience retail","street":"Chestnut Street","lon":-75.171719,"lat":39.95155,"closes":"10:00pm","hrs":true,"sched":["011111111111111100000000","011111111111111100000000","011111111111111100000000","011111111111111100000000","011111111111111100000000","011111111111111100000000","011111111111111100000000"]},{"name":"Cavanaugh's Rittenhouse","cat":"Restaurant with bar","street":"Sansom Street","lon":-75.172787,"lat":39.951264,"closes":"2:00am","hrs":true,"sched":["000001111111111111110000","000001111111111111110000","000001111111111111110000","000001111111111111110000","000001111111111111110000","000001111111111111110000","000001111111111111110000"]},{"name":"David Michie Violins","cat":"Comparison retail","street":"Locust Street A","lon":-75.169994,"lat":39.948717,"closes":"5:00pm","hrs":true,"sched":["000011111110000000000000","000011111110000000000000","000011110000000000000000","000011111110000000000000","000000000000000000000000","000000000000000000000000","000000000000000000000000"]},{"name":"Di Bruno Bros. at Rittenhouse Square","cat":"Food & convenience retail","street":"Chestnut Street","lon":-75.170045,"lat":39.951544,"closes":"8:00pm","hrs":true,"sched":["011111111111110000000000","011111111111110000000000","011111111111110000000000","011111111111110000000000","011111111111110000000000","011111111111100000000000","011111111111100000000000"]},{"name":"Dom's Shoe Services","cat":"Comparison retail","street":"South 20th Street","lon":-75.173698,"lat":39.950068,"closes":"5:30pm","hrs":true,"sched":["011111111111000000000000","011111111111000000000000","011111111111000000000000","011111111111000000000000","011111111111000000000000","000111111110000000000000","000000000000000000000000"]},{"name":"Dr. Martens Walnut Street","cat":"Comparison retail","street":"Walnut Street","lon":-75.169482,"lat":39.949856,"closes":"8:00pm","hrs":true,"sched":["000001111111100000000000","000001111111100000000000","000001111111100000000000","000001111111100000000000","000001111111110000000000","000001111111110000000000","000001111111100000000000"]},{"name":"Heads & Tails Beauty Boutique","cat":"Personal services","street":"South 19th Street","lon":-75.172539,"lat":39.948286,"closes":"8:00pm","hrs":true,"sched":["000000000000000000000000","000011111111000000000000","000000000111110000000000","000011111111110000000000","000011111111000000000000","000011111100000000000000","000000000000000000000000"]},{"name":"Henry A. Davidsen","cat":"Comparison retail","street":"Spruce Street","lon":-75.169698,"lat":39.947764,"closes":"5:00pm","hrs":true,"sched":["000111111110000000000000","000111111110000000000000","000111111110000000000000","000111111110000000000000","000111111110000000000000","000011111100000000000000","000000000000000000000000"]},{"name":"HipCityVeg","cat":"Restaurant","street":"South 18th Street","lon":-75.170398,"lat":39.950761,"closes":"10:00pm","hrs":true,"sched":["000011111111111100000000","000011111111111100000000","000011111111111100000000","000011111111111100000000","000011111111111100000000","000011111111111100000000","000011111111111100000000"]},{"name":"InnerVision Fine Eyewear","cat":"Comparison retail","street":"South 18th Street","lon":-75.170327,"lat":39.950648,"closes":"6:00pm","hrs":true,"sched":["000011111111000000000000","000011111111000000000000","000011111111000000000000","000011111111000000000000","000011111111000000000000","000011111110000000000000","000000000000000000000000"]},{"name":"Joan Shepp | Philadelphia Luxury Clothing Store","cat":"Comparison retail","street":"Walnut Street","lon":-75.172804,"lat":39.950522,"closes":"5:00pm","hrs":true,"sched":["000001111110000000000000","000001111110000000000000","000001111110000000000000","000001111110000000000000","000001111110000000000000","000001111110000000000000","000000111110000000000000"]},{"name":"La Colombe Coffee Workshop","cat":"Cafe / bakery / takeaway","street":"South 19th Street","lon":-75.172319,"lat":39.950756,"closes":"7:00pm","hrs":true,"sched":["111111111111100000000000","111111111111100000000000","111111111111100000000000","111111111111100000000000","111111111111100000000000","111111111111100000000000","111111111111100000000000"]},{"name":"La Fontana Della Citta","cat":"Restaurant with bar","street":"Spruce Street","lon":-75.169708,"lat":39.94771,"closes":"10:00pm","hrs":true,"sched":["000001111111111100000000","000001111111111100000000","000001111111111100000000","000001111111111100000000","000001111111111100000000","000001111111111100000000","000001111111111100000000"]},{"name":"Lacroix Restaurant at The Rittenhouse","cat":"Restaurant with bar","street":"West Rittenhouse Square","lon":-75.173645,"lat":39.949913,"closes":"9:30pm","hrs":true,"sched":["111111110011111000000000","111111110001111000000000","111111110001111000000000","111111110001111000000000","111111110001111100000000","011111110001111100000000","011111111111111000000000"]},{"name":"Libert\u00e9 Restobar","cat":"Restaurant with bar","street":"South 17th Street","lon":-75.169566,"lat":39.950928,"closes":"12:00am","hrs":true,"sched":["000001111111111110000000","000001111111111110000000","000001111111111110000000","000001111111111110000000","000001111111111111000000","000001111111111111000000","000001111111111100000000"]},{"name":"Madewell","cat":"Comparison retail","street":"Walnut Street","lon":-75.170248,"lat":39.950353,"closes":"7:00pm","hrs":true,"sched":["000011111111100000000000","000011111111100000000000","000011111111100000000000","000011111111100000000000","000011111111100000000000","000011111111100000000000","000001111111000000000000"]},{"name":"Marathon Grill Catering","cat":"Cafe / bakery / takeaway","street":"Spruce Street","lon":-75.172619,"lat":39.94811,"closes":"6:00pm","hrs":true,"sched":["000111111111000000000000","000111111111000000000000","000111111111000000000000","000111111111000000000000","000111111111000000000000","000000000000000000000000","000000000000000000000000"]},{"name":"Marathon On the Square Restaurant","cat":"Restaurant with bar","street":"Spruce Street","lon":-75.172619,"lat":39.94811,"closes":"9:00pm","hrs":true,"sched":["000001111111111000000000","000001111111111000000000","000001111111111000000000","000001111111111000000000","000001111111111000000000","000001111111111000000000","000001111111111000000000"]},{"name":"Mary Cassatt Tea Room & Garden","cat":"Cafe / bakery / takeaway","street":"West Rittenhouse Square","lon":-75.173024,"lat":39.949977,"closes":"3:30pm","hrs":true,"sched":["000000000000000000000000","000000000000000000000000","000000000000000000000000","000000111100000000000000","000000111100000000000000","000000111100000000000000","000000111100000000000000"]},{"name":"P.S. & Co.","cat":"Restaurant","street":"Locust Street","lon":-75.169735,"lat":39.948726,"closes":"6:00pm","hrs":true,"sched":["011111111111000000000000","011111111111000000000000","011111111111000000000000","011111111111000000000000","011111111111000000000000","000111111111000000000000","000111111110000000000000"]},{"name":"Philadelphia Runner","cat":"Comparison retail","street":"Walnut Street","lon":-75.169564,"lat":39.950264,"closes":"7:30pm","hrs":true,"sched":["000011111111110000000000","000011111111110000000000","000011111111110000000000","000011111111110000000000","000011111111110000000000","000011111111100000000000","000001111111000000000000"]},{"name":"Pietro's Italian","cat":"Restaurant with bar","street":"Walnut Street","lon":-75.169941,"lat":39.949931,"closes":"9:30pm","hrs":true,"sched":["000000111111111000000000","000000111111111000000000","000000111111111000000000","000000111111111000000000","000000111111111100000000","000000111111111100000000","000000111111111000000000"]},{"name":"Rescue Spa","cat":"Personal services","street":"Walnut Street","lon":-75.171211,"lat":39.950429,"closes":"8:30pm","hrs":true,"sched":["001111111111110000000000","001111111111110000000000","001111111111111000000000","001111111111111000000000","001111111111111000000000","001111111111110000000000","000011111111100000000000"]},{"name":"Restaurant Aleksandar","cat":"Restaurant with bar","street":"South 19th Street","lon":-75.172334,"lat":39.950949,"closes":"11:00pm","hrs":true,"sched":["000000000000000000000000","000000000001111000000000","000000000001111000000000","000000000001111000000000","000000000001111110000000","000001111001111110000000","000001111000000000000000"]},{"name":"Rittenhouse Claridge","cat":"Lodging / residential","street":"South 18th Street","lon":-75.170508,"lat":39.949868,"closes":"5:00pm","hrs":true,"sched":["000111111110000000000000","000111111110000000000000","000111111110000000000000","000111111110000000000000","000111111110000000000000","000001111100000000000000","000000000000000000000000"]},{"name":"Rittenhouse Grill","cat":"Restaurant with bar","street":"Locust Street","lon":-75.169558,"lat":39.948991,"closes":"10:00pm","hrs":true,"sched":["000000000000000000000000","000000000011111100000000","000000000011111100000000","000000000011111100000000","000000000011111100000000","000000000011111100000000","000000000011111100000000"]},{"name":"Rittenhouse Market","cat":"Food & convenience retail","street":"Spruce Street","lon":-75.170978,"lat":39.947856,"closes":"10:00pm","hrs":true,"sched":["111111111111111100000000","111111111111111100000000","111111111111111100000000","111111111111111100000000","111111111111111100000000","111111111111111100000000","111111111111111100000000"]},{"name":"Rittenhouse Square","cat":"Other / civic","street":"Walnut Street","lon":-75.171892,"lat":39.949462,"hrs":false,"sched":[null,null,null,null,null,null,null]},{"name":"Rouge","cat":"Restaurant with bar","street":"South 18th Street","lon":-75.17059,"lat":39.949688,"closes":"2:00am","hrs":true,"sched":["000000111111111111000000","000000111111111111000000","000000111111111111000000","000000111111111111110000","000000111111111111110000","000001111111111111110000","000001111111111111000000"]},{"name":"SEPHORA","cat":"Comparison retail","street":"Chestnut Street","lon":-75.169381,"lat":39.951344,"hrs":false,"sched":[null,null,null,null,null,null,null]},{"name":"Smokin Stogies n Stuff","cat":"Comparison retail","street":"South 18th Street","lon":-75.170517,"lat":39.951539,"closes":"11:00pm","hrs":true,"sched":["000000111111111100000000","000000111111111100000000","000000111111111100000000","000000111111111100000000","000000111111111110000000","000000111111111110000000","000000111111110000000000"]},{"name":"Sofitel Philadelphia at Rittenhouse Square","cat":"Lodging / residential","street":"South 17th Street","lon":-75.169482,"lat":39.950907,"hrs":false,"sched":[null,null,null,null,null,null,null]},{"name":"Spectix OPTIQUE Designer Eyewear Boutique in Philadelphia","cat":"Comparison retail","street":"West Rittenhouse Square","lon":-75.173169,"lat":39.949197,"closes":"6:00pm","hrs":true,"sched":["000000000000000000000000","000001111111000000000000","000001111111000000000000","000001111111000000000000","000001111111000000000000","000001111100000000000000","000000000000000000000000"]},{"name":"Stir Lounge","cat":"Bar / nightclub","street":"Chancellor Street","lon":-75.169572,"lat":39.949449,"closes":"2:00am","hrs":true,"sched":["000000000000000000000000","000000000011111111000000","000000000011111111110000","000000000011111111110000","000000000011111111110000","000000000011111111110000","000000000011111111000000"]},{"name":"TUMI Store - Walnut Street","cat":"Comparison retail","street":"Walnut Street","lon":-75.170414,"lat":39.950329,"closes":"7:00pm","hrs":true,"sched":["000011111111100000000000","000011111111100000000000","000011111111100000000000","000011111111100000000000","000011111111100000000000","000011111111100000000000","000000111111000000000000"]},{"name":"The Bakeshop on Twentieth","cat":"Cafe / bakery / takeaway","street":"South 20th Street","lon":-75.174133,"lat":39.94841,"closes":"4:00pm","hrs":true,"sched":["001111111000000000000000","001111111000000000000000","001111111000000000000000","001111111100000000000000","001111111100000000000000","001111111100000000000000","001111111000000000000000"]},{"name":"The Children's Boutique","cat":"Comparison retail","street":"South 17th Street","lon":-75.169188,"lat":39.950559,"closes":"5:00pm","hrs":true,"sched":["000011111110000000000000","000011111110000000000000","000011111110000000000000","000011111110000000000000","000011111110000000000000","000011111110000000000000","000001111100000000000000"]},{"name":"The Dandelion","cat":"Restaurant with bar","street":"South 18th Street","lon":-75.170631,"lat":39.950999,"closes":"12:00am","hrs":true,"sched":["000001111111111110000000","000001111111111110000000","000001111111111110000000","000001111111111110000000","000001111111111111000000","000011111111111111000000","000011111111111100000000"]},{"name":"The Dorchester on Rittenhouse Square","cat":"Lodging / residential","street":"West Rittenhouse Square","lon":-75.173252,"lat":39.949009,"hrs":false,"sched":[null,null,null,null,null,null,null]},{"name":"The Franklin Mortgage & Investment Company","cat":"Bar / nightclub","street":"Rittenhouse Square","lon":-75.170095,"lat":39.948516,"closes":"2:00am","hrs":true,"sched":["000000000001111111000000","000000000001111111000000","000000000001111111000000","000000000001111111000000","000000000001111111110000","000000000001111111110000","000000000001111111000000"]},{"name":"The Franklin on Rittenhouse, A Boutique Hotel","cat":"Lodging / residential","street":"Rittenhouse Square","lon":-75.170132,"lat":39.948351,"hrs":false,"sched":[null,null,null,null,null,null,null]},{"name":"The Goat Rittenhouse","cat":"Restaurant with bar","street":"Sansom Street","lon":-75.172379,"lat":39.95121,"closes":"2:00am","hrs":true,"sched":["000000000011111111000000","000000000011111111000000","000000000011111111110000","000000000011111111110000","000000000011111111110000","000000111111111111110000","000000111111111111000000"]},{"name":"The Library Bar","cat":"Bar / nightclub","street":"West Rittenhouse Square","lon":-75.173251,"lat":39.949815,"closes":"12:00am","hrs":true,"sched":["000000000001111110000000","000000000001111110000000","000000000001111110000000","000000000001111110000000","000000000011111111000000","000000000011111111000000","000000000001111110000000"]},{"name":"The Love.","cat":"Restaurant with bar","street":"South 18th Street","lon":-75.170939,"lat":39.950607,"closes":"10:00pm","hrs":true,"sched":["000001110001111100000000","000001110001111100000000","000001110001111100000000","000001110001111100000000","000001110001111100000000","000011110001111100000000","000011110001111100000000"]},{"name":"The Rittenhouse Hotel","cat":"Lodging / residential","street":"West Rittenhouse Square","lon":-75.173257,"lat":39.949831,"hrs":false,"sched":[null,null,null,null,null,null,null]},{"name":"The Warwick Hotel Rittenhouse Square Philadelphia","cat":"Lodging / residential","street":"South 17th Street","lon":-75.169355,"lat":39.949274,"hrs":false,"sched":[null,null,null,null,null,null,null]},{"name":"Tiffany & Co.","cat":"Comparison retail","street":"Walnut Street","lon":-75.169736,"lat":39.950287,"closes":"7:00pm","hrs":true,"sched":["000011111111100000000000","000011111111100000000000","000011111111100000000000","000011111111100000000000","000011111111100000000000","000011111111100000000000","000000111110000000000000"]},{"name":"Tria Cafe Rittenhouse","cat":"Restaurant with bar","street":"South 18th Street","lon":-75.170417,"lat":39.950948,"closes":"11:30pm","hrs":true,"sched":["000000111111111100000000","000000111111111100000000","000000111111111100000000","000000111111111100000000","000000111111111111000000","000000111111111111000000","000001111111111100000000"]},{"name":"Vango Lounge and Skybar","cat":"Bar / nightclub","street":"South 18th Street","lon":-75.170655,"lat":39.951243,"closes":"2:00am","hrs":true,"sched":["000000000000111111110000","000000000000000000000000","000000000000111111110000","000000000000111111110000","000000000000111111110000","000000000000111111110000","000000000000111111110000"]},{"name":"Veda - Modern Indian Bistro","cat":"Restaurant with bar","street":"Chestnut Street","lon":-75.172859,"lat":39.951877,"closes":"10:30pm","hrs":true,"sched":["000001111011111100000000","000001111011111100000000","000001111011111100000000","000001111011111100000000","000001111001111110000000","000000111101111110000000","000000111101111100000000"]},{"name":"Xponance Inc. | Formerly FIS Group","cat":"Other / civic","street":"Walnut Street","lon":-75.171517,"lat":39.950677,"closes":"5:00pm","hrs":true,"sched":["000111111110000000000000","000111111110000000000000","000111111110000000000000","000111111110000000000000","000111111110000000000000","000000000000000000000000","000000000000000000000000"]},{"name":"Zama","cat":"Restaurant with bar","street":"South 19th Street","lon":-75.172368,"lat":39.950924,"closes":"10:00pm","hrs":true,"sched":["000000111001111000000000","000000111001111000000000","000000111001111000000000","000000111001111000000000","000000111001111100000000","000000000001111100000000","000000000001111000000000"]},{"name":"a.bar","cat":"Bar / nightclub","street":"Walnut Street","lon":-75.170535,"lat":39.950208,"closes":"12:00am","hrs":true,"sched":["000000000011111100000000","000000000011111111000000","000000000011111111000000","000000000011111111000000","000000000011111111000000","000000000011111111000000","000000000011111100000000"]},{"name":"a.kitchen+bar","cat":"Restaurant with bar","street":"South 18th Street","lon":-75.170401,"lat":39.950392,"closes":"10:00pm","hrs":true,"sched":["000000000011111000000000","001111111011111100000000","001111111011111100000000","001111111011111100000000","001111111011111100000000","000011111011111100000000","000011111011111000000000"]},{"name":"lululemon","cat":"Comparison retail","street":"1718/1720 Walnut Street","lon":-75.170118,"lat":39.949937,"closes":"7:00pm","hrs":true,"sched":["000011111111100000000000","000011111111100000000000","000011111111100000000000","000011111111100000000000","000011111111100000000000","000011111111100000000000","000001111111000000000000"]},{"name":"machi sushi bar","cat":"Restaurant","street":"South 20th Street","lon":-75.173797,"lat":39.950049,"closes":"10:00pm","hrs":true,"sched":["000000111111111100000000","000000000000000000000000","000000111111111100000000","000000111111111100000000","000000111111111100000000","000000111111111100000000","000000111111111100000000"]}]};
+
+/* ---------- business groups, with the colours used across the brief -------- */
+const GROUPS = [
+  {key:"Comparison retail",       label:"Comparison retail",    col:"#4F9BF5",
+   cats:["Comparison retail"]},
+  {key:"Restaurants & bars",      label:"Restaurants &amp; bars",col:"#FF7A45",
+   cats:["Restaurant with bar","Restaurant","Bar / nightclub"]},
+  {key:"Cafés & takeaway",        label:"Caf&eacute;s &amp; takeaway", col:"#2ED3A0",
+   cats:["Cafe / bakery / takeaway"]},
+  {key:"Everyday retail",         label:"Everyday retail",      col:"#FFC93C",
+   cats:["Food & convenience retail"]},
+  {key:"Services, lodging, civic",label:"Services, lodging, civic", col:"#A9A396",
+   cats:["Personal services","Lodging / residential","Other / civic"]}
+];
+const groupOf = c => (GROUPS.find(g=>g.cats.includes(c)) || GROUPS[4]).key;
+const ICON = {
+  "Restaurant with bar":"rest", "Restaurant":"rest", "Bar / nightclub":"wine",
+  "Cafe / bakery / takeaway":"cup", "Comparison retail":"bag",
+  "Food & convenience retail":"basket", "Lodging / residential":"bed",
+  "Personal services":"scissors", "Other / civic":"scissors"
+};
+const iconOf = c => ICON[c] || "scissors";
+const colOf   = k => (GROUPS.find(g=>g.key===k) || GROUPS[4]).col;
+
+/* ---------- sky: day -> night ---------- */
+const SKY = [
+  [0 ,[253,246,227],[26,26,23]],   // 6am  cream
+  [5 ,[255,249,230],[26,26,23]],   // 11am
+  [11,[255,242,205],[26,26,23]],   // 5pm
+  [13,[250,214,150],[35,30,20]],   // 7pm  golden
+  [15,[193,156,140],[255,250,240]],// 9pm  dusk
+  [17,[ 92, 96,135],[245,243,236]],// 11pm
+  [20,[ 26, 40, 84],[238,236,228]],// 2am
+  [23,[ 11, 23, 51],[235,233,225]] // 5am  deep night
+];
+const lerp=(a,b,t)=>a+(b-a)*t;
+function skyAt(s){
+  let i=0; while(i<SKY.length-2 && s>SKY[i+1][0]) i++;
+  const [s0,c0,t0]=SKY[i],[s1,c1,t1]=SKY[i+1];
+  const t=s1===s0?0:(s-s0)/(s1-s0);
+  const arr=(x,y)=>[0,1,2].map(i=>Math.round(lerp(x[i],y[i],t)));
+  const bg=arr(c0,c1), fg=arr(t0,t1);
+  const rgb=a=>`rgb(${a[0]},${a[1]},${a[2]})`;
+  //  mix ink toward the background by `k` so contrast holds at every stage,
+  //  including the dusk mid-tone where a light/dark switch would fail
+  const mixk=(a,b,k)=>rgb([0,1,2].map(i=>Math.round(lerp(a[i],b[i],k))));
+  return {bg:rgb(bg), fg:rgb(fg), bgArr:bg, fgArr:fg,
+          ink2:mixk(fg,bg,.26), muted:mixk(fg,bg,.46),
+          night:(0.299*bg[0]+0.587*bg[1]+0.114*bg[2])<140};
+}
+
+/* ---------- projection ---------- */
+const W=640,H=560,PAD=26;
+const [x0,y0,x1,y1]=DATA.bbox;
+const latMid=(y0+y1)/2, kx=Math.cos(latMid*Math.PI/180);
+const spanX=(x1-x0)*kx, spanY=(y1-y0);
+const sc=Math.min((W-2*PAD)/spanX,(H-2*PAD)/spanY);
+const offX=(W-spanX*sc)/2, offY=(H-spanY*sc)/2;
+const px=lon=>offX+(lon-x0)*kx*sc;
+const py=lat=>H-offY-(lat-y0)*sc;
+
+/* ---------- build the map ---------- */
+const svg=document.getElementById("map");
+const NS="http://www.w3.org/2000/svg";
+svg.insertAdjacentHTML("afterbegin",
+  '<defs><symbol id="ic-rest" viewBox="0 0 24 24"><path d="M7.4 2.4C10 2.4 10.7 6.1 10.7 10.3V12.6H7.4Z"/><rect x="8.3" y="12" width="2" height="9.6" rx="1"/><rect x="13.5" y="2.4" width="1.6" height="5.8" rx=".8"/><rect x="16.2" y="2.4" width="1.6" height="5.8" rx=".8"/><rect x="18.9" y="2.4" width="1.6" height="5.8" rx=".8"/><rect x="13.5" y="7.6" width="7" height="2.1" rx="1.05"/><rect x="16" y="9" width="2" height="12.6" rx="1"/></symbol><symbol id="ic-wine" viewBox="0 0 24 24"><path d="M7.2 2.8h9.6c0 5.8-2.1 9-4.8 9s-4.8-3.2-4.8-9Z"/><rect x="11.2" y="11.4" width="1.6" height="7.4" rx=".7"/><rect x="7.8" y="19.6" width="8.4" height="1.9" rx=".95"/></symbol><symbol id="ic-cup" viewBox="0 0 24 24"><path d="M5.6 6.4h10.8V14c0 3-2.4 5.4-5.4 5.4S5.6 17 5.6 14Z"/><path d="M16.4 8.4h2.2a3.4 3.4 0 0 1 0 6.8h-2.2v-2h2.2a1.4 1.4 0 0 0 0-2.8h-2.2Z"/><rect x="3.8" y="20.3" width="14.4" height="1.7" rx=".85"/></symbol><symbol id="ic-bag" viewBox="0 0 24 24"><rect x="4.6" y="8.2" width="14.8" height="13.2" rx="1.7"/><path d="M8.6 8.6V5.9a3.4 3.4 0 0 1 6.8 0v2.7h-2V5.9a1.4 1.4 0 0 0-2.8 0v2.7Z"/></symbol><symbol id="ic-basket" viewBox="0 0 24 24"><path d="M7.4 8.6H21.8L19.4 16.6H9.6Z"/><path d="M2.6 4.2h4.2l.9 3 2.5 9.4.5 1.8H8.6L6.1 8.4 5.3 6H2.6Z"/><circle cx="10.8" cy="20.4" r="2"/><circle cx="18.4" cy="20.4" r="2"/></symbol><symbol id="ic-bed" viewBox="0 0 24 24"><rect x="2.8" y="6.4" width="2.5" height="12" rx="1.2"/><rect x="5" y="12" width="16.2" height="4.4" rx="1.6"/><rect x="6.4" y="9.1" width="5.4" height="3.2" rx="1.4"/><rect x="2.8" y="16.2" width="18.4" height="2.3" rx="1.15"/><rect x="3.2" y="18.3" width="2" height="3" rx=".9"/><rect x="18.8" y="18.3" width="2" height="3" rx=".9"/></symbol><symbol id="ic-scissors" viewBox="0 0 24 24"><path d="M7.2 2.6 9.7 1.7 18 16.4 15.5 17.4Z"/><path d="M16.8 2.6 14.3 1.7 6 16.4 8.5 17.4Z"/><path fill-rule="evenodd" d="M3.8 18.8a3.1 3.1 0 1 0 6.2 0 3.1 3.1 0 1 0-6.2 0ZM5.7 18.8a1.2 1.2 0 1 1 2.4 0 1.2 1.2 0 1 1-2.4 0Z"/><path fill-rule="evenodd" d="M14 18.8a3.1 3.1 0 1 0 6.2 0 3.1 3.1 0 1 0-6.2 0ZM15.9 18.8a1.2 1.2 0 1 1 2.4 0 1.2 1.2 0 1 1-2.4 0Z"/></symbol></defs>');
+const el=(n,a)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);return e;};
+
+const gStreets=el("g",{id:"streets"}); svg.appendChild(gStreets);
+DATA.streets.forEach(s=>{
+  const d="M"+s.pts.map(p=>`${px(p[0]).toFixed(1)},${py(p[1]).toFixed(1)}`).join("L");
+  gStreets.appendChild(el("path",{d,fill:"none","stroke-width":2.6,"stroke-linecap":"round"}));
+});
+const polyPts=DATA.poly.map(p=>`${px(p[0]).toFixed(1)},${py(p[1]).toFixed(1)}`).join(" ");
+const boundary=el("polygon",{points:polyPts,fill:"none","stroke-width":1.6,
+  "stroke-dasharray":"6 5"}); svg.appendChild(boundary);
+
+/* ---------- tooltip ---------- */
+const tip=document.getElementById("tip");
+function showTip(ev,e,g){
+  const open=isOpen(e,slot);
+  tip.innerHTML=`<b>${e.name}</b><span>${e.cat}${e.street?" · "+e.street:""}</span>`+
+    (e.hrs?`<span>${open?"Open now":"Shut"} · closes ${e.closes||"—"}</span>`
+          :`<span>No published hours</span>`);
+  const box=svg.getBoundingClientRect();
+  tip.style.left=Math.min(ev.clientX-box.left+12,box.width-220)+"px";
+  tip.style.top=(ev.clientY-box.top+12)+"px";
+  tip.style.opacity=1;
+}
+const hideTip=()=>tip.style.opacity=0;
+
+const gPts=el("g",{id:"pts"}); svg.appendChild(gPts);
+const nodes=DATA.est.map(e=>{
+  const g=groupOf(e.cat);
+  const X=px(e.lon).toFixed(1), Y=py(e.lat).toFixed(1);
+  /* a <g> that scales about its own centre, so growing the icon when a place
+     opens does not shift it off its address */
+  const c=el("g",{transform:`translate(${X},${Y}) scale(.6)`,"data-g":g});
+  const u=el("use",{href:"#ic-"+iconOf(e.cat),x:-12,y:-12,width:24,height:24});
+  u.style.paintOrder="stroke";
+  c.appendChild(u); c.u=u;
+  c.style.cursor="pointer";
+  c.style.transition="opacity .3s, transform .3s";
+  gPts.appendChild(c);
+  c.addEventListener("mouseenter",ev=>showTip(ev,e,g));
+  c.addEventListener("mouseleave",hideTip);
+  return {e,c,g,X,Y};
+});
+
+/* ---------- legend ---------- */
+const hidden=new Set();
+const legend=document.getElementById("legend");
+GROUPS.forEach(g=>{
+  const row=document.createElement("div");
+  row.className="lg";
+  row.innerHTML=`<span class="dot" style="background:${g.col}"></span>
+                 <span>${g.label}</span><span class="n" data-n="${g.key}">0</span>`;
+  row.onclick=()=>{hidden.has(g.key)?hidden.delete(g.key):hidden.add(g.key);
+                   row.classList.toggle("off");render();};
+  legend.appendChild(row);
+});
+
+/* ---------- day buttons ---------- */
+let dayIdx=4, slot=0;
+const daysEl=document.getElementById("days");
+DATA.days.forEach((d,i)=>{
+  const b=document.createElement("button");
+  b.textContent=d.slice(0,3);
+  b.onclick=()=>{dayIdx=i;[...daysEl.children].forEach(c=>c.classList.remove("on"));
+                 b.classList.add("on");render();};
+  if(i===dayIdx)b.classList.add("on");
+  daysEl.appendChild(b);
+});
+
+/* ---------- state ---------- */
+const isOpen=(e,s)=>!!(e.sched && e.sched[dayIdx] && e.sched[dayIdx][s]==="1");
+const slotLabel=s=>{
+  const h=(s+6)%24, ap=h<12?"am":"pm";
+  const hh=h===0?12:(h>12?h-12:h);
+  return `${hh}:00${ap}`;
+};
+
+const slider=document.getElementById("slider");
+slider.addEventListener("input",()=>{slot=+slider.value;render();});
+
+function render(){
+  const sky=skyAt(slot);
+  document.body.style.background=sky.bg;
+  document.documentElement.style.setProperty("--sky",sky.bg);
+  document.documentElement.style.setProperty("--ink",sky.fg);
+  document.documentElement.style.setProperty("--ink2",sky.ink2);
+  document.documentElement.style.setProperty("--muted",sky.muted);
+  document.documentElement.style.setProperty("--panel",
+    sky.night?"rgba(255,255,255,.08)":"rgba(255,255,255,.55)");
+  document.documentElement.style.setProperty("--edge",
+    sky.night?"rgba(255,255,255,.16)":"rgba(0,0,0,.14)");
+
+  gStreets.querySelectorAll("path").forEach(p=>
+    p.setAttribute("stroke",sky.night?"rgba(255,255,255,.13)":"rgba(0,0,0,.10)"));
+  boundary.setAttribute("stroke",sky.night?"rgba(255,255,255,.4)":"rgba(0,0,0,.42)");
+
+  let open=0; const per={};
+  GROUPS.forEach(g=>per[g.key]=0);
+
+  nodes.forEach(({e,c,g,X,Y})=>{
+    const vis=!hidden.has(g);
+    const size=s=>c.setAttribute("transform",`translate(${X},${Y}) scale(${s})`);
+    if(!e.hrs){                                   // no published hours: outline only
+      c.u.setAttribute("fill","none");
+      c.u.setAttribute("stroke",sky.night?"rgba(255,255,255,.5)":"rgba(0,0,0,.38)");
+      c.u.setAttribute("stroke-width",1.4);
+      size(.52); c.style.opacity=vis?.8:.06;
+      return;
+    }
+    const on=isOpen(e,slot);
+    if(on&&vis){open++;per[g]++;}
+    c.u.setAttribute("fill",on?colOf(g):(sky.night?"#5A5E6B":"#C9C4B6"));
+    /* a halo behind the fill keeps the icon legible against the night sky */
+    c.u.setAttribute("stroke",on?(sky.night?"rgba(255,255,255,.28)":"rgba(0,0,0,.26)")
+                                :"transparent");
+    c.u.setAttribute("stroke-width",on?1.7:0);
+    size(on?.78:.44);
+    c.style.opacity=vis?(on?1:.45):.06;
+  });
+
+  document.getElementById("count").textContent=open;
+  document.getElementById("time").textContent=slotLabel(slot);
+  document.getElementById("dayname").textContent=DATA.days[dayIdx]+" night";
+  GROUPS.forEach(g=>{
+    const n=legend.querySelector(`[data-n="${CSS.escape(g.key)}"]`);
+    if(n)n.textContent=per[g.key];
+  });
+}
+
+/* ---------- play ---------- */
+let timer=null;
+const playBtn=document.getElementById("play");
+playBtn.onclick=()=>{
+  if(timer){clearInterval(timer);timer=null;playBtn.textContent="▶ Play";return;}
+  playBtn.textContent="❚❚ Pause";
+  if(slot>=23)slot=0;
+  timer=setInterval(()=>{
+    slot++;
+    if(slot>23){clearInterval(timer);timer=null;playBtn.textContent="▶ Play";slot=23;}
+    slider.value=slot;render();
+  },620);
+};
+
+document.getElementById("total").textContent=DATA.est.filter(e=>e.hrs).length;
+render();
+</script>
+</body>
+</html>
